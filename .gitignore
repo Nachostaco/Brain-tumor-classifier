@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+outputs/
+*.pt
+*.pth
+configs/local.yaml
+.env
+wandb/

@@ -1,0 +1,13 @@
+torch
+torchvision
+timm
+peft
+scikit-learn
+pandas
+pillow
+grad-cam
+fastapi
+uvicorn
+streamlit
+pyyaml
+pytest
