@@ -1,4 +1,1 @@
-# TODO: uzupełnij konfigurację, np.:
-# data: {root_dir, labels_csv, image_size, batch_size}
-# model: {backbone, num_classes, method: full|lora|linear_probe, lora: {r, alpha, dropout}}
-# training: {epochs, lr, weight_decay}
+{'glioma': 0, 'meningioma': 1, 'no_tumor': 2, 'pituitary': 3}
