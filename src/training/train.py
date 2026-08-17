@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
+import wandb
 
 from src.data.dataset import build_dataloaders
 from src.models.small_model import build_model, count_trainable_params
@@ -70,8 +71,21 @@ def load_checkpoint(path, model, optimizer, device):
 
 
 def main():
+    from_checkpoint = False
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
+
+    run = wandb.init(
+        entity="aincen-politechnika-l-ska",
+        project="Brain_detector",
+        config={
+            "backbone": "resnet18",
+            "method": "full",
+            "lr": LR,
+            "batch_size": BATCH_SIZE,
+            "epochs": EPOCHS,
+        },
+    )
 
     OUTPUT_DIR.mkdir(exist_ok=True)
 
@@ -95,7 +109,7 @@ def main():
     last_checkpoint_path = OUTPUT_DIR / "checkpoint_last.pt"
     best_checkpoint_path = OUTPUT_DIR / "best_model.pt"
 
-    if last_checkpoint_path.exists():
+    if last_checkpoint_path.exists() and from_checkpoint:
         start_epoch, best_val_acc, patience_counter = load_checkpoint(
             last_checkpoint_path, model, optimizer, device
         )
@@ -108,6 +122,16 @@ def main():
         )
         val_loss, val_acc = run_epoch(
             model, val_loader, criterion, optimizer, device, train=False
+        )
+
+        wandb.log(
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "train_acc": train_acc,
+                "val_loss": val_loss,
+                "val_acc": val_acc,
+            }
         )
 
         print(
@@ -136,6 +160,7 @@ def main():
         if patience_counter >= EARLY_STOPING_PATIENCE:
             print(f"Early stopping, last update {patience_counter} epochs before")
 
+    wandb.finish()
     print(f"Training complete: val accuracy = {best_val_acc:.4f}")
 
 
