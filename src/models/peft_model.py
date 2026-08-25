@@ -18,10 +18,12 @@ def build_model(
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
     lora_target_modules: list[str] | None = None,
+    img_size: int = 224,
 ) -> nn.Module:
-    backbone = timm.create_model(
-        backbone_name, pretrained=True, num_classes=num_classes
-    )
+    create_kwargs = {"pretrained": True, "num_classes": num_classes}
+    if "vit" in backbone_name or "dinov2" in backbone_name:
+        create_kwargs["img_size"] = img_size
+    backbone = timm.create_model(backbone_name, **create_kwargs)
 
     if method == "full":
         return backbone

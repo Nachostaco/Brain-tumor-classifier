@@ -86,6 +86,7 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--img-size", type=int, default=224)
     return parser.parse_args()
 
 
@@ -110,7 +111,10 @@ def main():
     print(f"Class mapping: {class_to_idx}")
 
     model = build_model(
-        num_classes=NUM_CLASSES, backbone_name=args.backbone, method=args.method
+        num_classes=NUM_CLASSES,
+        backbone_name=args.backbone,
+        method=args.method,
+        img_size=args.img_size,
     ).to(device)
     trainable, total = count_trainable_params(model)
     print(f"Trainable params: {trainable}/{total}")
