@@ -7,14 +7,17 @@ import torch.nn as nn
 from torch.optim import Adam
 from tqdm import tqdm
 import wandb
+import argparse
 
 from src.data.dataset import build_dataloaders
-from src.models.small_model import build_model, count_trainable_params
+from src.models.peft_model import build_model, count_trainable_params
 
+METHOD = "lora"
+BACKBONE = "vit_small_patch14_dinov2_lvd142m"
 NUM_CLASSES = 4
 BATCH_SIZE = 32
 EPOCHS = 15
-LR = 1e-4
+LR = 3e-4 if METHOD == "lora" else 1e-4
 EARLY_STOPING_PATIENCE = 5
 OUTPUT_DIR = Path("outputs")
 TRAIN_DIR = "src/data/brisc2025/classification_task/train/"
@@ -70,7 +73,24 @@ def load_checkpoint(path, model, optimizer, device):
     )
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--train-dir", type=str, default="src/data/brisc2025/classification_task/train"
+    )
+    parser.add_argument(
+        "--test-dir", type=str, default="src/data/brisc2025/classification_task/test"
+    )
+    parser.add_argument("--method", type=str, default="full", choices=["full", "lora"])
+    parser.add_argument("--backbone", type=str, default="resnet18")
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--batch-size", type=int, default=16)
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     from_checkpoint = False
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -78,24 +98,20 @@ def main():
     run = wandb.init(
         entity="aincen-politechnika-l-ska",
         project="Brain_detector",
-        config={
-            "backbone": "resnet18",
-            "method": "full",
-            "lr": LR,
-            "batch_size": BATCH_SIZE,
-            "epochs": EPOCHS,
-        },
+        config=vars(args),
     )
 
     OUTPUT_DIR.mkdir(exist_ok=True)
 
     train_loader, val_loader, test_loader, class_to_idx = build_dataloaders(
-        train_dir=TRAIN_DIR, test_dir=TEST_DIR, batch_size=BATCH_SIZE
+        train_dir=args.train_dir, test_dir=args.test_dir, batch_size=args.batch_size
     )
 
     print(f"Class mapping: {class_to_idx}")
 
-    model = build_model(NUM_CLASSES).to(device)
+    model = build_model(
+        num_classes=NUM_CLASSES, backbone_name=args.backbone, method=args.method
+    ).to(device)
     trainable, total = count_trainable_params(model)
     print(f"Trainable params: {trainable}/{total}")
 
@@ -116,7 +132,7 @@ def main():
         start_epoch += 1
         print(f"Return to training since epoch: {start_epoch}")
 
-    for epoch in range(start_epoch, EPOCHS):
+    for epoch in range(start_epoch, args.epochs):
         train_loss, train_acc = run_epoch(
             model, train_loader, criterion, optimizer, device, train=True
         )
@@ -135,7 +151,7 @@ def main():
         )
 
         print(
-            f"Epoch {epoch + 1}/{EPOCHS} | "
+            f"Epoch {epoch + 1}/{args.epochs} | "
             f"train loss = {train_loss:.4f} train acc = {train_acc:.4f} | "
             f"val loss = {val_loss:.4f} val acc = {val_acc:.4f}"
         )
