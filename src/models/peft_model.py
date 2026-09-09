@@ -28,6 +28,12 @@ def build_model(
     if method == "full":
         return backbone
 
+    if method == "linear_probe":
+        for name, param in backbone.parameters():
+            if "head" not in name:
+                param.requires_grad = False
+        return backbone
+
     if method == "lora":
         target_modules = lora_target_modules or ["qkv", "proj"]
         lora_config = LoraConfig(
