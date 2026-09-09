@@ -29,7 +29,7 @@ def build_model(
         return backbone
 
     if method == "linear_probe":
-        for name, param in backbone.parameters():
+        for name, param in backbone.named_parameters():
             if "head" not in name:
                 param.requires_grad = False
         return backbone
