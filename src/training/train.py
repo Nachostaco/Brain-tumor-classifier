@@ -81,7 +81,9 @@ def parse_args():
     parser.add_argument(
         "--test-dir", type=str, default="src/data/brisc2025/classification_task/test"
     )
-    parser.add_argument("--method", type=str, default="full", choices=["full", "lora"])
+    parser.add_argument(
+        "--method", type=str, default="full", choices=["full", "lora", "linear_probe"]
+    )
     parser.add_argument("--backbone", type=str, default="resnet18")
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--epochs", type=int, default=20)
@@ -179,6 +181,7 @@ def main():
 
         if patience_counter >= EARLY_STOPING_PATIENCE:
             print(f"Early stopping, last update {patience_counter} epochs before")
+            break
 
     wandb.finish()
     print(f"Training complete: val accuracy = {best_val_acc:.4f}")
