@@ -89,6 +89,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--img-size", type=int, default=224)
+    parser.add_argument("--stop-condition", type=int, default=10)
     return parser.parse_args()
 
 
@@ -179,7 +180,7 @@ def main():
             patience_counter,
         )
 
-        if patience_counter >= EARLY_STOPING_PATIENCE:
+        if patience_counter >= args.stop_condition:
             print(f"Early stopping, last update {patience_counter} epochs before")
             break
 
